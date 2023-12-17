@@ -1,4 +1,11 @@
-import { getJob, getJobs, getJobsByCompany } from "../db/jobs.js";
+import {
+  getJob,
+  getJobs,
+  getJobsByCompany,
+  createJob,
+  deleteJob,
+  updateJob,
+} from "../db/jobs.js";
 import { getCompany } from "../db/companies.js";
 import { GraphQLError } from "graphql";
 
@@ -25,6 +32,19 @@ export default {
         throw notFoundError("No Company found with id " + id);
       }
       return company;
+    },
+  },
+
+  Mutation: {
+    createJob: (_root, { input: { title, description } }) => {
+      const companyId = "FjcJCHJALA4i";
+      return createJob({ companyId, title, description });
+    },
+    deleteJob: (_root, { id }) => {
+      return deleteJob(id);
+    },
+    updateJob: (_root, { input: { id, title, description } }) => {
+      return updateJob({ id, title, description });
     },
   },
 

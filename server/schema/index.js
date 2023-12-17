@@ -4,6 +4,13 @@ export const typeDefs = `#graphql
         jobs: [Job!]
         company(id: ID!): Company
     }
+
+    type Mutation {
+        createJob(input: CreateJobInput): Job
+        deleteJob(id: ID!): Job
+        updateJob(input: UpdateJobInput!): Job
+    }
+
     """
     This is a documentation comment
     """
@@ -23,5 +30,18 @@ export const typeDefs = `#graphql
         name: String!
         description: String
         jobs: [Job!]! # first ! is make element is not null, the second is make array is not null
+    }
+
+    # type Company,.. is for output type
+    # input CreateJobInput is for input type that use for Mutation
+    input CreateJobInput {
+        title:String!
+        description: String
+    }
+
+    input UpdateJobInput {
+        id: ID!
+        title:String!
+        description: String
     }
 `;
