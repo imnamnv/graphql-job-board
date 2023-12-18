@@ -1,6 +1,18 @@
 import { GraphQLClient, gql } from "graphql-request";
+import { getAccessToken } from "../auth";
 
-const client = new GraphQLClient("http://localhost:9000/graphql");
+const client = new GraphQLClient("http://localhost:9000/graphql", {
+  headers: () => {
+    // set for all request
+    const accessToken = getAccessToken();
+    if (accessToken) {
+      return {
+        Authorization: `Bearer ${accessToken}`,
+      };
+    }
+    return {};
+  },
+});
 
 export async function getJobs() {
   // we can add #graphql for help extendsion know the graphql code
@@ -71,8 +83,12 @@ export async function createJob({ title, description }) {
       }
     }
   `;
-  const { job } = await client.request(mutation, {
-    input: { title, description },
-  });
+  const { job } = await client.request(
+    mutation,
+    {
+      input: { title, description },
+    },
+    {} /* we can set header for earch request */
+  );
   return job;
 }
