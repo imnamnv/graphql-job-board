@@ -1,6 +1,15 @@
-import { GraphQLClient, gql } from "graphql-request";
+import {
+  ApolloClient,
+  InMemoryCache,
+  createHttpLink,
+  concat,
+  gql,
+  ApolloLink,
+} from "@apollo/client"; // the main reasion to change to ApolloClient is more future: Cache. ApolloClient only work with gql from graphql-tag. It returns DocumentNode
+import { GraphQLClient /*, gql*/ } from "graphql-request"; //gql is return string, it just makes extendsion detech the code
 import { getAccessToken } from "../auth";
 
+//graphql-request
 const client = new GraphQLClient("http://localhost:9000/graphql", {
   headers: () => {
     // set for all request
@@ -12,6 +21,29 @@ const client = new GraphQLClient("http://localhost:9000/graphql", {
     }
     return {};
   },
+});
+
+// apollo-client setting the header is different way : https://www.apollographql.com/docs/react/api/link/introduction
+const httpLink = createHttpLink({ uri: "http://localhost:9000/graphql" });
+
+const authLink = new ApolloLink((operation, forward) => {
+  // set for all request
+  const accessToken = getAccessToken();
+  if (accessToken) {
+    operation.setContext(({ headers }) => {
+      console.log("headers", headers);
+      return {
+        headers: { ...headers, Authorization: `Bearer ${accessToken}` },
+      };
+    });
+  }
+  return forward(operation);
+});
+
+// https://www.apollographql.com/docs/react/networking/advanced-http-networking/#:~:text=own%20custom%20links.-,Customizing%20request%20logic,-The%20following%20example
+const apolloClient = new ApolloClient({
+  link: concat(authLink, httpLink),
+  cache: new InMemoryCache(),
 });
 
 export async function getJobs() {
@@ -29,9 +61,13 @@ export async function getJobs() {
       }
     }
   `;
+  // graphql-request
+  // const { jobs } = await client.request(query);
+  // return jobs;
 
-  const { jobs } = await client.request(query);
-  return jobs;
+  // apollo-client
+  const { data } = await apolloClient.query({ query });
+  return data.jobs;
 }
 
 export async function getJob(id) {
@@ -50,8 +86,17 @@ export async function getJob(id) {
     }
   `;
 
-  const { job } = await client.request(query, { id }); // second parameter is variables
-  return job;
+  // graphql-request
+  // const { job } = await client.request(query, { id }); // second parameter is variables
+  // return job;
+
+  // apollo-client
+  const { data } = await apolloClient.query({
+    query,
+    variables: { id },
+  });
+
+  return data.job;
 }
 
 export async function getCompany(id) {
@@ -69,9 +114,13 @@ export async function getCompany(id) {
       }
     }
   `;
+  // graphql-request
+  // const { company } = await client.request(query, { id });
+  // return company;
 
-  const { company } = await client.request(query, { id });
-  return company;
+  // apollo-client
+  const { data } = await apolloClient.query({ query, variables: { id } });
+  return data.company;
 }
 
 export async function createJob({ title, description }) {
@@ -83,12 +132,22 @@ export async function createJob({ title, description }) {
       }
     }
   `;
-  const { job } = await client.request(
+
+  // graphql-request
+  // const { job } = await client.request(
+  //   mutation,
+  //   {
+  //     input: { title, description },
+  //   },
+  //   {} /* we can set header for earch request */
+  // );
+
+  // apollo-client
+  const { data } = await apolloClient.mutate({
     mutation,
-    {
+    variables: {
       input: { title, description },
     },
-    {} /* we can set header for earch request */
-  );
-  return job;
+  });
+  return data.job;
 }
