@@ -10,7 +10,7 @@ function JobPage() {
   const [job, setJob] = useState();
 
   useEffect(() => {
-    getJob(jobId).then(setJob);
+    getJob(jobId).then(setJob); // we only set getJobs to call network every time. If getJob has cache => it will not call => we set by writeQuery function
   }, [jobId]);
 
   if (!job) return <>Loading...</>;

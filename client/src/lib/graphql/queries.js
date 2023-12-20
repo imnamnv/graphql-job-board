@@ -44,7 +44,39 @@ const authLink = new ApolloLink((operation, forward) => {
 const apolloClient = new ApolloClient({
   link: concat(authLink, httpLink),
   cache: new InMemoryCache(),
+  // defaultOptions:{
+  //   query:{
+  //     fetchPolicy:"network-only" // set how to interact with catch: it is call to server every time
+  //   },
+  //   watchQuery:{
+  //     fetchPolicy: "network-only" // use for react hook: rerender component after call to server everytime
+  //   }
+  // }
 });
+
+// Fragment: using when we have the same query
+const jobDetailFragment = gql`
+  fragment JobDetail on Job {
+    id
+    date
+    description
+    title
+    company {
+      id
+      name
+    }
+  }
+`;
+
+const jobByIdQuery = gql`
+  query ($id: ID!) {
+    job(id: $id) {
+      ...JobDetail
+    }
+  }
+  # it likes we write the fragment below the query (append the string)
+  ${jobDetailFragment}
+`;
 
 export async function getJobs() {
   // we can add #graphql for help extendsion know the graphql code
@@ -66,33 +98,21 @@ export async function getJobs() {
   // return jobs;
 
   // apollo-client
-  const { data } = await apolloClient.query({ query });
+  const { data } = await apolloClient.query({
+    query,
+    fetchPolicy: "network-only", // call to server everytime
+  });
   return data.jobs;
 }
 
 export async function getJob(id) {
-  const query = gql`
-    query ($id: ID!) {
-      job(id: $id) {
-        id
-        date
-        description
-        title
-        company {
-          id
-          name
-        }
-      }
-    }
-  `;
-
   // graphql-request
   // const { job } = await client.request(query, { id }); // second parameter is variables
   // return job;
 
   // apollo-client
   const { data } = await apolloClient.query({
-    query,
+    query: jobByIdQuery,
     variables: { id },
   });
 
@@ -126,11 +146,13 @@ export async function getCompany(id) {
 export async function createJob({ title, description }) {
   const mutation = gql`
     mutation CreateJob($input: CreateJobInput) {
+      # "job" is for rename of the property that return from server: createJob
       job: createJob(input: $input) {
-        # "job" is for rename of te property that return from server: createJob
-        id
+        ...JobDetail
       }
     }
+    # it likes we write the fragment below the query (append the string)
+    ${jobDetailFragment}
   `;
 
   // graphql-request
@@ -147,6 +169,14 @@ export async function createJob({ title, description }) {
     mutation,
     variables: {
       input: { title, description },
+    },
+    //function that is called when we get the response
+    update: (cache, { data } /* it is result */) => {
+      cache.writeQuery({
+        query: jobByIdQuery, // we want to use the same query that we will use for getJob function, if not: it will return incorrect data when we call getJob: it will call cache first
+        variables: { id: data.job.id },
+        data,
+      });
     },
   });
   return data.job;
