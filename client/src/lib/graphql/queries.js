@@ -41,7 +41,7 @@ const authLink = new ApolloLink((operation, forward) => {
 });
 
 // https://www.apollographql.com/docs/react/networking/advanced-http-networking/#:~:text=own%20custom%20links.-,Customizing%20request%20logic,-The%20following%20example
-const apolloClient = new ApolloClient({
+export const apolloClient = new ApolloClient({
   link: concat(authLink, httpLink),
   cache: new InMemoryCache(),
   // defaultOptions:{
@@ -68,7 +68,7 @@ const jobDetailFragment = gql`
   }
 `;
 
-const jobByIdQuery = gql`
+export const jobByIdQuery = gql`
   query ($id: ID!) {
     job(id: $id) {
       ...JobDetail
@@ -105,6 +105,21 @@ export async function getJobs() {
   return data.jobs;
 }
 
+//use through hook
+export const jobsQuery = gql`
+  query {
+    jobs {
+      id
+      title
+      date
+      company {
+        name
+        id
+      }
+    }
+  }
+`;
+
 export async function getJob(id) {
   // graphql-request
   // const { job } = await client.request(query, { id }); // second parameter is variables
@@ -119,6 +134,7 @@ export async function getJob(id) {
   return data.job;
 }
 
+// use manually
 export async function getCompany(id) {
   const query = gql`
     query ($id: ID!) {
@@ -142,6 +158,22 @@ export async function getCompany(id) {
   const { data } = await apolloClient.query({ query, variables: { id } });
   return data.company;
 }
+
+// use through hook useQuery
+export const companyByIdQuery = gql`
+  query ($id: ID!) {
+    company(id: $id) {
+      id
+      name
+      description
+      jobs {
+        id
+        date
+        title
+      }
+    }
+  }
+`;
 
 export async function createJob({ title, description }) {
   const mutation = gql`
@@ -181,3 +213,14 @@ export async function createJob({ title, description }) {
   });
   return data.job;
 }
+
+export const createJobMutation = gql`
+  mutation CreateJob($input: CreateJobInput) {
+    # "job" is for rename of the property that return from server: createJob
+    job: createJob(input: $input) {
+      ...JobDetail
+    }
+  }
+  # it likes we write the fragment below the query (append the string)
+  ${jobDetailFragment}
+`;

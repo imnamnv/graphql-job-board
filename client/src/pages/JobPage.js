@@ -3,17 +3,26 @@ import { Link } from "react-router-dom";
 import { formatDate } from "../lib/formatters";
 import { useEffect, useState } from "react";
 import { getJob } from "../lib/graphql/queries";
+import { useJob } from "../lib/graphql/hooks";
 
 function JobPage() {
   const { jobId } = useParams();
 
-  const [job, setJob] = useState();
+  //use manually
+  // const [job, setJob] = useState();
 
-  useEffect(() => {
-    getJob(jobId).then(setJob); // we only set getJobs to call network every time. If getJob has cache => it will not call => we set by writeQuery function
-  }, [jobId]);
+  // useEffect(() => {
+  //   getJob(jobId).then(setJob); // we only set getJobs to call network every time. If getJob has cache => it will not call => we set by writeQuery function
+  // }, [jobId]);
 
-  if (!job) return <>Loading...</>;
+  // if (!job) return <>Loading...</>;
+
+  //use through hook
+
+  const { job, loading, error } = useJob(jobId);
+
+  if (loading) return <>Loading...</>;
+  if (error) return <>Data unavailable</>;
 
   return (
     <div>
