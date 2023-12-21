@@ -6,6 +6,7 @@ import { expressMiddleware } from "@apollo/server/express4";
 import { typeDefs } from "./schema/index.js";
 import resolvers from "./resolvers/index.js";
 import { getUser } from "./db/users.js";
+import { createCompanyLoader } from "./db/companies.js";
 
 const PORT = 9000;
 
@@ -21,12 +22,15 @@ app.post("/login", handleLogin);
 const apolloServer = new ApolloServer({ typeDefs, resolvers });
 await apolloServer.start();
 
+// setting context for EACH request
 async function getContext({ req }) {
+  const companyLoader = createCompanyLoader();
+
+  const context = { companyLoader };
   if (req.auth) {
-    const user = await getUser(req.auth.sub);
-    return { user };
+    context.user = await getUser(req.auth.sub);
   }
-  return {};
+  return context;
 }
 
 // using Apollo like a middleware, Apollo can using stand alone: startStandaloneServer

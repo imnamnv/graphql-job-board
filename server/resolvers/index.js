@@ -90,8 +90,10 @@ export default {
       // job is object was return from parent resolver: getJobs();
       return toIsoDate(job.createdAt);
     },
-    company: (job) => {
-      return getCompany(job.companyId);
+    company: (job, _args, { companyLoader }) => {
+      // get new instance from context for EACH request
+      // return getCompany(job.companyId); // normal way
+      return companyLoader.load(job.companyId); // resolver N+1 problem: collect all of the companyId first => call the database to load
     },
   },
 
