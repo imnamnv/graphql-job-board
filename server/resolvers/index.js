@@ -5,6 +5,7 @@ import {
   createJob,
   deleteJob,
   updateJob,
+  countJobs,
 } from "../db/jobs.js";
 import { getCompany } from "../db/companies.js";
 import { GraphQLError } from "graphql";
@@ -12,9 +13,11 @@ import { GraphQLError } from "graphql";
 // if the property of the object was returned is not defined on schema, it will not return the properties without error
 export default {
   Query: {
-    jobs: async () => {
+    jobs: async (_root, { limit, offset }) => {
       // resolver of "type Query"
-      return await getJobs();
+      const items = await getJobs(limit, offset);
+      const totalCount = await countJobs();
+      return { items, totalCount };
     },
     // in this case we don't have parent schema => _root undefined
     job: async (_root, args) => {

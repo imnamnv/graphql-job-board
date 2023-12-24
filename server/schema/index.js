@@ -1,8 +1,13 @@
 export const typeDefs = `#graphql
     type Query {
         job(id: ID!): Job # pass a agument by query
-        jobs: [Job!]
+        jobs(limit: Int, offset: Int): JobSubList
         company(id: ID!): Company
+    }
+
+    type JobSubList {
+        items: [Job!]!,
+        totalCount: Int!
     }
 
     type Mutation {

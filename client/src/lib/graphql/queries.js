@@ -78,11 +78,11 @@ export const jobByIdQuery = gql`
   ${jobDetailFragment}
 `;
 
-export async function getJobs() {
-  // we can add #graphql for help extendsion know the graphql code
-  const query = gql`
-    query {
-      jobs {
+//use through hook
+export const jobsQuery = gql`
+  query ($limit: Int, $offset: Int) {
+    jobs(limit: $limit, offset: $offset) {
+      items {
         id
         title
         date
@@ -90,6 +90,27 @@ export async function getJobs() {
           name
           id
         }
+      }
+      totalCount
+    }
+  }
+`;
+
+export async function getJobs() {
+  // we can add #graphql for help extendsion know the graphql code
+  const query = gql`
+    query ($limit: Int, $offset: Int) {
+      jobs(limit: $limit, offset: $offset) {
+        items {
+          id
+          title
+          date
+          company {
+            name
+            id
+          }
+        }
+        totalCount
       }
     }
   `;
@@ -99,26 +120,11 @@ export async function getJobs() {
 
   // apollo-client
   const { data } = await apolloClient.query({
-    query,
+    jobsQuery,
     fetchPolicy: "network-only", // call to server everytime
   });
   return data.jobs;
 }
-
-//use through hook
-export const jobsQuery = gql`
-  query {
-    jobs {
-      id
-      title
-      date
-      company {
-        name
-        id
-      }
-    }
-  }
-`;
 
 export async function getJob(id) {
   // graphql-request
